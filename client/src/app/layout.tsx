@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import Header from "@/components/header";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -35,6 +36,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <div className="mb-5">
+              <Header />
+            </div>
             {children}
           </ThemeProvider>
         </body>
