@@ -19,8 +19,10 @@ import { Input } from "@/components/ui/input";
 import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import envConfig from "@/app/config";
 import { toast } from "sonner";
+import { useAppContext } from "@/app/AppProvider";
 
 const LoginForm = () => {
+  const { setSessionToken } = useAppContext();
   const form = useForm<LoginBodyType>({
     resolver: zodResolver(LoginBody),
     defaultValues: {
@@ -31,13 +33,16 @@ const LoginForm = () => {
 
   async function onSubmit(values: LoginBodyType) {
     try {
-      await fetch(`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`, {
-        body: JSON.stringify(values),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      }).then(async (res) => {
+      const result = await fetch(
+        `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`,
+        {
+          body: JSON.stringify(values),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        }
+      ).then(async (res) => {
         const payload = await res.json();
         const data = {
           status: res.status,
@@ -48,8 +53,23 @@ const LoginForm = () => {
         }
         return data;
       });
-
       toast.success("Login successful!");
+
+      // console.log(result);
+
+      /////////////////Goi NextServer de set cookie cho client
+      const resultFromNextServer = await fetch("/api/auth", {
+        method: "POST",
+        body: JSON.stringify(result),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const nextServerData = await resultFromNextServer.json();
+      setSessionToken(nextServerData.data.token);
+      console.log(nextServerData);
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errors = error.payload.errors as {
