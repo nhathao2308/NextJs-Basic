@@ -16,37 +16,58 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  RegisterBody,
-  RegisterBodyType,
-} from "@/schemaValidations/auth.schema";
+import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import envConfig from "@/app/config";
+import { toast } from "sonner";
 
-const RegisterForm = () => {
-  const form = useForm<RegisterBodyType>({
-    resolver: zodResolver(RegisterBody),
+const LoginForm = () => {
+  const form = useForm<LoginBodyType>({
+    resolver: zodResolver(LoginBody),
     defaultValues: {
       email: "",
-      name: "",
       password: "",
-      confirmPassword: "",
     },
   });
 
-  async function onSubmit(values: RegisterBodyType) {
-    console.log("hi");
-
-    const result = await fetch(
-      `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/register`,
-      {
+  async function onSubmit(values: LoginBodyType) {
+    try {
+      await fetch(`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`, {
         body: JSON.stringify(values),
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
+      }).then(async (res) => {
+        const payload = await res.json();
+        const data = {
+          status: res.status,
+          payload: payload,
+        };
+        if (!res.ok) {
+          throw data;
+        }
+        return data;
+      });
+
+      toast.success("Login successful!");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errors = error.payload.errors as {
+        field: string;
+        message: string;
+      }[];
+      const status = error.status as number;
+      if (status === 422) {
+        errors.forEach((error) => {
+          form.setError(error.field as "email" | "password", {
+            type: "server",
+            message: error.message,
+          });
+        });
+      } else {
+        toast.error(`${error.payload.message}`);
       }
-    ).then((res) => res.json());
-    console.log(result);
+    }
   }
 
   return (
@@ -70,19 +91,6 @@ const RegisterForm = () => {
         />
         <FormField
           control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name: </FormLabel>
-              <FormControl>
-                <Input placeholder="Your Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
@@ -94,29 +102,12 @@ const RegisterForm = () => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password: </FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Confirm Password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <Button type="submit" className="mt-5 w-full">
-          Register
+          Login
         </Button>
       </form>
     </Form>
   );
 };
 
-export default RegisterForm;
+export default LoginForm;

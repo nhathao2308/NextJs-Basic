@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from "@/components/header";
+import { Toaster } from "@/components/ui/sonner";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
     <>
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.className}`}>
+          <Toaster />
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
